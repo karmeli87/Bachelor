@@ -17,6 +17,10 @@ public class LogWorker implements Runnable{
 		private static double total = 0;
 		private int processNum;
 		
+		static void resetTotal(){
+			total = 0;
+		}
+		
 		public static void writeTotal() throws IOException{
 			List<String> totalLine = new ArrayList<String>();
 			totalLine.add("process total " + total);

@@ -12,15 +12,37 @@ public class MatlabExecutorStandAlone implements Runnable{
 	
 	private List<String> jobs = new ArrayList<String>();
 	private StringBuilder prog = new StringBuilder();
+	private static boolean singleThread = false;
+	private static boolean assignCore = false;
+	private static boolean showDisp = false;
 	private static String MatlabPath = "matlab";
-	private static String OS = "matlab";  
+	private static String OS = "matlab"; 
+	
+	private int instanceNum;
+	private static int cou = 0;
+	
+	public static void init(){
+		cou = 0;
+	}
+	
 	public MatlabExecutorStandAlone(){
 		prog.append("params=load('params.mat');"
 				+ "fpcit_init(params);");
+		this.instanceNum = cou++;
 		//jobs.add("params=load('params.mat');");
 		//jobs.add("fpcit_init(params);");
 	}
 	
+	public static List<String> listFilesForFolder(File folder) {
+		List<String> myFiles = new ArrayList<String>();
+	    for (final File fileEntry : folder.listFiles()) {
+	        if (!fileEntry.isDirectory()) {
+	        	myFiles.add(fileEntry.getName());
+	        }
+	    }
+	    return myFiles;
+	}
+
 	public void addJob(String jn){
 		jobs.add(jn);
 	}
@@ -41,14 +63,23 @@ public class MatlabExecutorStandAlone implements Runnable{
 		MatlabExecutorStandAlone.OS = os;
 	}
 	public List<String> getCmd(){
-		 List<String> command = new ArrayList<String>();
+		List<String> command = new ArrayList<String>();
+		if(MatlabExecutorStandAlone.OS == "Linux" && assignCore){
+			command.addAll(Arrays.asList("taskset","-c",Integer.toString(instanceNum)));
+		}
 		List<String> arg1 = MatlabExecutorStandAlone.OS == "Linux" ? 
-				Arrays.asList("-nosplash","-nodisplay","-nodesktop") :
-				Arrays.asList("-nosplash","-nodisplay","-nodesktop","-minimize");
+				Arrays.asList("-nojit","-nosplash","-nodisplay","-nodesktop") :
+				Arrays.asList("-nojit","-nosplash","-nodisplay","-nodesktop","-minimize");
 		List<String> arg2 = Arrays.asList("-r",getMatlabProgramm());
 		command.add(MatlabExecutorStandAlone.MatlabPath);
 		command.addAll(arg1);
+		if(singleThread){
+			command.add("-singleCompThread");
+		}
 		command.addAll(arg2);
+		if(MatlabExecutorStandAlone.OS == "Linux" && !showDisp){
+			command.addAll(Arrays.asList(">","/dev/null"));
+		}
 		return command;
 	}
 	public void run(){
@@ -68,29 +99,30 @@ public class MatlabExecutorStandAlone implements Runnable{
 	}
 	public static void main(String args[]) throws IOException, InterruptedException{
 		// java -jar MatlabExecutor.jar -p -c ./config.txt -it 20 -n 2
-		String paths[] ={
-				"config1.txt",
-				"config2.txt",
-				"config3.txt",
-				"config4.txt",
-				"config5.txt",
-				"config6.txt",
-				"config7.txt",
-				"config8.txt"
-		};
+		String paths[];
 		List<String> myArgs = Arrays.asList(args);
 		boolean isLinux = System.getProperty("os.name").contains("Linux");
 		MatlabExecutorStandAlone.setMatlabPath(isLinux ? "matlab" : "C:/Program Files/MATLAB/R2014b/bin/matlab");
 		MatlabExecutorStandAlone.setOS(isLinux ? "Linux" : "Windows");
+		MatlabExecutorStandAlone.assignCore = myArgs.indexOf("-ac") > -1;
+		MatlabExecutorStandAlone.singleThread = myArgs.indexOf("-st") > -1;
+		MatlabExecutorStandAlone.showDisp = myArgs.indexOf("-disp") > -1;
+		
+		File folder = new File("./");
 		
 		int configIndex = myArgs.indexOf("-c");
-		String mainConfigFile = configIndex > -1 ? myArgs.get(configIndex+1) : "C:/Users/Karmeli/Desktop/Koop-HU-Informatik/FPCIT_d3s/config.txt";
+		if(configIndex > -1){
+			folder = new File(myArgs.get(configIndex+1));
+		}
 		
+		List<String >list = listFilesForFolder(folder);
+		paths = list.toArray(new String[list.size()]);
+		
+		//String mainConfigFile = configIndex > -1 ? myArgs.get(configIndex+1) : "C:/Users/Karmeli/Desktop/Koop-HU-Informatik/FPCIT_d3s/config.txt";
 		int logIndex = myArgs.indexOf("-log");
 		if(logIndex > -1){
 			LogServer.LogFile = myArgs.get(logIndex+1);
 		}
-		
 		
 		int iterationsIndex = myArgs.indexOf("-it");
 		int iterations = iterationsIndex > -1 ? Integer.parseInt(myArgs.get(iterationsIndex+1)) : 1;
@@ -101,10 +133,10 @@ public class MatlabExecutorStandAlone implements Runnable{
 		
 		boolean isParallel = myArgs.indexOf("-p") > -1; 
 		
-		
 		for(int it = 0; it < iterations; it++){
 			Thread t = new Thread(new LogServer());
 			t.start();
+			MatlabExecutorStandAlone.init();
 			MatlabExecutorStandAlone runners[] = new MatlabExecutorStandAlone[processes];
 			for (int i = 0; i < runners.length; i++) {
 				runners[i] = new MatlabExecutorStandAlone();

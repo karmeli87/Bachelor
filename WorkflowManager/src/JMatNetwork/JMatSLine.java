@@ -66,7 +66,7 @@ public class JMatSLine implements Runnable{
 	
 	public void waitToComplete() throws IOException{
 		while(!"done".equals(in.readLine()));
-		System.out.println("Processes on client "+ ID +" are completed");
+		JMatTime.PrintWithTime("Processes on client "+ ID +" are completed");
 	}
 	
 	private synchronized void notifyCtrl() throws InterruptedException{

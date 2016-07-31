@@ -14,7 +14,7 @@ import JMat.JMatFileInfo;
 public class JMatClient {
 	
 	
-	private final int myCores = 4;//Runtime.getRuntime().availableProcessors();
+	private int myCores = Runtime.getRuntime().availableProcessors();
 	
 	private Socket mySocket = null;
 	private String Server_Addr;
@@ -32,7 +32,7 @@ public class JMatClient {
 		out = new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream()));
 		in = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
 		
-		System.out.println("Sending cores number");
+		JMatTime.PrintWithTime("Sending cores number");
 		
 		out.write(Integer.toString(myCores));
 		out.newLine();
@@ -46,32 +46,32 @@ public class JMatClient {
 			signalCompletion();	
 		} while(!in.readLine().equals("close"));
 		
-		System.out.println("Close client...");
+		JMatTime.PrintWithTime("Close client...");
 	}
 	
 	private void awaitTrigger() throws IOException{
-		System.out.print("Awaiting trigger ... ");
+		JMatTime.PrintWithTime("Awaiting trigger ... ");
 		while(!in.readLine().equals("start"));
 		System.out.println("start");
 	}
 	
 	private void getProcessInfo() throws IOException{
 		String line;
-		System.out.println("Retrive info ... ");
+		JMatTime.PrintWithTime("Retrive info ... ");
 		while(!(line = in.readLine()).equals("end")){
 			System.out.println(line);
 			group.list.add(JMatFileInfo.destringfy(line));
 		}
 	}
 	private void signalCompletion() throws IOException{
-		System.out.println("Sending singal to server");
+		JMatTime.PrintWithTime("Sending singal to server");
 		out.write("done");
 		out.newLine();
 		out.flush();
 	}
 	private void spawnProcesses() throws InterruptedException{
 		processes = new Thread[group.list.size()];
-		System.out.println("Running processes ... ");
+		JMatTime.PrintWithTime("Running processes ... ");
 		
 		for(int i=0;i<group.list.size();i++){
 			processes[i] = new Thread(new JMatExecutor(group.list.get(i)));
@@ -80,23 +80,32 @@ public class JMatClient {
 		for(Thread t : processes){
 			t.join();
 		}
-		System.out.println("All done");
+		JMatTime.PrintWithTime("All done");
 	}
 	
 	public JMatClient(String server) throws IOException, InterruptedException{
-		this.Server_Addr = server;
-		System.out.println("Start client...");
-		this.register();
+		this(server,4);
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException{
-		String svr = "localhost";
-		if(args.length == 0){
-			System.out.println("Warning: no server address entered -> server is localhost");
-		} else {
-			svr = args[0];
+	public JMatClient(String server,int coresNum) throws IOException, InterruptedException{
+		if (coresNum > 0){
+			this.myCores = coresNum;	
 		}
-		new JMatClient(svr);
+		this.Server_Addr = server;
+		JMatTime.PrintWithTime("Start client with " + this.myCores + "  available cores");
+		this.register();
 	}
 	
+	public static void main(String[] args) throws IOException, InterruptedException{
+		String svr = "localhost";
+		int myCores=0;
+		
+		switch(args.length){
+			case 2: myCores=Integer.parseInt(args[1]);
+			case 1: svr = args[0]; break;
+			case 0: System.out.println("Warning: no server address entered -> server is localhost");
+		}
+		
+		new JMatClient(svr,myCores);
+	}	
 }

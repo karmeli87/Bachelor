@@ -1,5 +1,6 @@
 package JMat;
 
+import JMatNetwork.JMatTime;
 import MatlabPackage.MatlabExecutor;
 import MatlabPackage.MatlabExternalCmd;
 
@@ -27,6 +28,7 @@ public class JMatExecutor extends JMatFileInfo implements Runnable{
 		addJobs();
 		matlab = new MatlabExecutor(cmd.stringfyJobs());
 		matlab.run();
+		JMatTime.PrintWithTime(myFile + "is done");
 	}
 	
 	

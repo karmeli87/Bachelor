@@ -24,28 +24,28 @@ public class JMatTalker implements Runnable {
 			client.setCtrl(this);
 		}
 		try {
-			System.out.println("Waiting for all clients to be ready ... ");
+			JMatTime.PrintWithTime("Waiting for all clients to be ready ... ");
 			state++;
 			waitForClients();
 			state++;
-			System.out.println("OK");
-	    	System.out.println("Sending info to clients ... ");
+			JMatTime.PrintWithTime("OK");
+			JMatTime.PrintWithTime("Sending info to clients ... ");
 	    	notifyClients();
 	    	state++;
 	    	waitForClients();
 	    	state++;
-	    	System.out.println("Done");
-	    	System.out.println("Sending triggers ... ");
+	    	JMatTime.PrintWithTime("Done");
+	    	JMatTime.PrintWithTime("Sending triggers ... ");
 	    	notifyClients();
 	    	state++;
 	    	waitForClients();
 	    	state++;
-	    	System.out.println("Done");
-	    	System.out.println("Wait for processes on all clients to complete ... ");
+	    	JMatTime.PrintWithTime("Done");
+	    	JMatTime.PrintWithTime("Wait for processes on all clients to complete ... ");
 	    	waitForClients();
 	    	state++;
 	    	// TODO check if clients are alive
-	    	System.out.println("Done");
+	    	JMatTime.PrintWithTime("Done");
 	    	notifyEnd();	
 	    	state = 0;
 		} catch (InterruptedException e) {
@@ -55,14 +55,14 @@ public class JMatTalker implements Runnable {
 
 	private synchronized void waitForClients() throws InterruptedException{
 		clientCoutner += clients.size();
-		System.out.println("[wait,"+state+"] Current coutner value : " + clientCoutner);
+		JMatTime.PrintWithTime("[wait,"+state+"] Current coutner value : " + clientCoutner);
 		if(clientCoutner > 0){
 			wait();
 		}
 	}
 	public synchronized void notifyCtrl(){
 		clientCoutner--;
-		System.out.println("[notify,"+state+"] Current coutner value : " + clientCoutner);
+		JMatTime.PrintWithTime("[notify,"+state+"] Current coutner value : " + clientCoutner);
 		
 		if(clientCoutner == 0){
 			notify();

@@ -33,8 +33,8 @@ public class MatlabExecutor implements Runnable{
 	public List<String> getCmd(){
 		 List<String> command = new ArrayList<String>();
 		List<String> arg1 = !isWindows() ? 
-				Arrays.asList("-nosplash","-nodisplay","-nodesktop") :
-				Arrays.asList("-nosplash","-nodisplay","-nodesktop","-minimize","-wait");
+				Arrays.asList("-nosplash","-nodisplay","-nodesktop","-singleCompThread","-nojit") :
+				Arrays.asList("-nosplash","-nodisplay","-nodesktop","-singleCompThread","-nojit","-minimize","-wait");
 		List<String> arg2 = Arrays.asList("-r",program);
 		List<String> arg3 = !isWindows() ? 
 				Arrays.asList(">","/dev/null") :
@@ -58,8 +58,8 @@ public class MatlabExecutor implements Runnable{
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.redirectOutput(Redirect.INHERIT);
 			pb.redirectError(Redirect.INHERIT);
-			System.out.printf("run command: %s\n",cmd);
 			process = pb.start();
+			System.out.printf("run command: %s\n",cmd);
 			process.waitFor();
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block

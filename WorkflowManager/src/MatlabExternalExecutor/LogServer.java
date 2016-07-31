@@ -23,6 +23,7 @@ public class LogServer implements Runnable{
 		}
 	}
 	public LogServer() throws IOException{
+		LogWorker.resetTotal();
 		File yourFile = new File(LogServer.LogFile);
 		if(!yourFile.exists()) {
 		    yourFile.createNewFile();
