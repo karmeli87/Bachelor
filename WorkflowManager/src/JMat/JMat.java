@@ -9,18 +9,18 @@ import java.util.concurrent.TimeUnit;
 
 import MatlabPackage.MatlabExecutor;
 
-public class Workflow extends MatlabCodeAssambler {
+public class JMat extends MatlabCodeAssambler {
 	
 	JMatExecutor head;
 	JMatExecutor merge;
 	JMatExecutor[] parts;
 	
-	public Workflow(String mainScriptFile) throws Exception {
+	public JMat(String mainScriptFile) throws Exception {
 		super(mainScriptFile);
 		// TODO Auto-generated constructor stub
 	}
 	
-	public Workflow(String mainScriptFile,int pNum) throws Exception {
+	public JMat(String mainScriptFile,int pNum) throws Exception {
 		super(mainScriptFile);
 		if(pNum > 0){
 			this.ProcessNum = pNum;
@@ -109,7 +109,7 @@ public class Workflow extends MatlabCodeAssambler {
 		//String mainScriptFile = scriptIndex > -1 ? myArgs.get(scriptIndex+1) : "C:/Users/Karmeli/Desktop/Koop-HU-Informatik/FPCIT_d3s/main.m";
 		
 		try {
-			Workflow workflow = new Workflow(mainScriptFile,processes);
+			JMat workflow = new JMat(mainScriptFile,processes);
 			workflow.work();
 			if(cleanMode != CleanMode.none){
 				System.out.println("Cleaning temp files...");
