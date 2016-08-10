@@ -2,8 +2,12 @@ package JMatNetwork;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 
@@ -56,11 +60,14 @@ public class JMatClient {
 	}
 	
 	private void getProcessInfo() throws IOException{
-		String line;
+		String line,input;
 		JMatTime.PrintWithTime("Retrive info ... ");
-		while(!(line = in.readLine()).equals("end")){
-			System.out.println(line);
-			group.list.add(JMatFileInfo.destringfy(line));
+		while(!(line = in.readLine()).equals("end")){	
+			input=line;
+			while(!(line = in.readLine()).equals("###")){
+				input+=line;
+			}
+			group.list.add(JMatFileInfo.destringfy(input));
 		}
 	}
 	private void signalCompletion() throws IOException{
@@ -81,6 +88,21 @@ public class JMatClient {
 			t.join();
 		}
 		JMatTime.PrintWithTime("All done");
+	}
+	
+	private void sendFile(String fn) throws IOException{
+		File file = new File(fn);
+        // Get the size of the file
+        long length = file.length();
+        byte[] bytes = new byte[16 * 1024];
+        InputStream inf = new FileInputStream(file);
+        OutputStream outf = mySocket.getOutputStream();
+        int count;
+        while ((count = inf.read(bytes)) > 0) {
+            outf.write(bytes, 0, count);
+        }
+        outf.close();
+        inf.close();
 	}
 	
 	public JMatClient(String server) throws IOException, InterruptedException{

@@ -51,11 +51,7 @@ public class JMatController extends MatlabCodeAssambler implements Runnable{
 	}
 	
 	private void prepareHeaderPart(JMatSLine client){
-		try {
-			this._BuildStartup();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		this._BuildStartup();
 		this._BuildHeadFile();
 		client.files.list.add(new JMatFileInfo("startup",headPart.fileName,initialStateFile));
 	}
@@ -67,13 +63,13 @@ public class JMatController extends MatlabCodeAssambler implements Runnable{
 		}
 		this.setProcessNum(processes);
 		
-		this._BuildProcessFile();
+		this._BuildProcessFile(false);
 		this._BuildMergeFile();
 		
 		int j = 0;
 		for(JMatSLine client : clients){
 			for(int i=0; i<client.getCoresNum(); i++){
-				client.files.list.add(new JMatFileInfo("startup",forPart[i+j].fileName,forPart[i+j].fileName + "_State.mat"));
+				client.files.list.add(new JMatFileInfo("startup",forPart[i+j].content,forPart[i+j].resultFile));
 			}
 			j+=client.getCoresNum();
 		}

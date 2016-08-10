@@ -3,6 +3,7 @@ package JMat;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -24,6 +25,7 @@ public class MatlabCodeAssambler{
 	protected String mergedStateFile = addFilePrefix("MergedState.mat");
 	
 	private Path mainScript;
+	private Path localFolder = Paths.get("\\home\\tmp\\");
 	
 	public MatlabCodeAssambler(String path) throws Exception{
 		this.mainScript = Paths.get(path);
@@ -61,7 +63,7 @@ public class MatlabCodeAssambler{
 	protected void _BuildHeadFile(){
 		String headScriptFile = addFilePrefix("HeadPart.m");
 		String code = "try\n" + mp.head + "\n save('"+initialStateFile+"');exit;" + getGlobalCatchErrorCode("err_"+headScriptFile+".log");
-		headPart = new MatlabFileCreator(headScriptFile,code);
+		headPart = new MatlabFileCreator(headScriptFile,code,initialStateFile);
 		headWorker = new Thread(headPart);
 		headWorker.start();
 	}
@@ -69,12 +71,15 @@ public class MatlabCodeAssambler{
 	public String getIndexString (int index){
 		return "ceil((" + mp.endIndex + " - " + mp.startIndex +")*"+ index +"/" + this.ProcessNum + "+" + mp.startIndex +")";
 	}
-	
 	protected void _BuildProcessFile(){
+		_BuildProcessFile(true);
+	}
+	protected void _BuildProcessFile(boolean create){
 		// procRes and procId are special vars
 		workers = new Thread[this.ProcessNum];
 		forPart = new MatlabFileCreator[this.ProcessNum];
 		String initPart = mp.init + "procRes={};\n";
+		
 		
 		for(int i=0; i<this.ProcessNum;i++){
 			String lastLoop = i == this.ProcessNum-1 ? "" : "-1";
@@ -82,19 +87,25 @@ public class MatlabCodeAssambler{
 			String processFileName = fileName + ".m";
 			String localProcVars = "\n procId = " + i +";\n";
 			String resultFile = fileName + "_State.mat";
+			if(create && Files.exists(localFolder)){
+				//resultFile = localFolder.toString() + "\\" + resultFile;
+			}
 			String startIndex = getIndexString(i);
 			String endIndex = getIndexString(i+1);
 			String forHead = "for " + mp.iterator + "=" + startIndex + ":" + endIndex + lastLoop+"\n";
 			String forBlock = "try\n" + mp.loop + getLocalCatchErrorCode("err_"+fileName+".log") + "end\n";
+			String save = "save('" + resultFile + "','procRes');";
 			String code = 	"try\n"  
 							+ "load('"+initialStateFile+"');\n" 
 							+ localProcVars + initPart + forHead + forBlock  
 							+ getGlobalCatchErrorCode("err_"+fileName+".log")
-							+ "save('" + resultFile + "','procRes');"
+							+ save
 							+ "exit;";
-			forPart[i] = new MatlabFileCreator(processFileName,code);
-			workers[i] = new Thread(forPart[i]);
-			workers[i].start();
+			forPart[i] = new MatlabFileCreator(processFileName,code,resultFile);
+			if(create){
+				workers[i] = new Thread(forPart[i]);
+				workers[i].start();		
+			}
 		}
 	}
 	
@@ -109,17 +120,20 @@ public class MatlabCodeAssambler{
 		mergingCode += getGlobalCatchErrorCode("err_JMat_MergePart.log");
 				
 		String code = loadInitialState + mergingCode + mp.tail + "\n save('"+mergedStateFile+"','procRes');exit;";
-		mergePart = new MatlabFileCreator(mergeScriptFile,code);
+		mergePart = new MatlabFileCreator(mergeScriptFile,code,mergedStateFile);
 		mergeWorker = new Thread(mergePart);
 		mergeWorker.start();
 	}
 	
-	protected void _BuildStartup() throws FileNotFoundException{
+	protected void _BuildStartup(){
 		String abPath = mainScript.toAbsolutePath().toString();
 		String str = "addpath('"+abPath.substring(0,abPath.lastIndexOf(File.separator))+"')";
 		
 		try(  PrintWriter out = new PrintWriter("startup.m")  ){
 			out.println(str);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	

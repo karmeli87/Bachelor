@@ -146,7 +146,8 @@ public class MatlabExecutorStandAlone implements Runnable{
 				int assignTo = i % processes;
 				runners[assignTo].addJob(paths[i]);
 			}
-			
+			System.out.println("Start batch total time measure...");
+			long startTime = System.nanoTime();
 			for (int i = 0; i < runners.length; i++) {
 				if(isParallel){
 					exec.execute(runners[i]);
@@ -156,6 +157,9 @@ public class MatlabExecutorStandAlone implements Runnable{
 			}
 			
 			t.join();
+			long endTime = System.nanoTime();
+			long duration = (endTime - startTime)/1000000000; // seconds.
+			System.out.println(paths.length + " patients with " + runners.length + " instances done in " + duration +" secondes");
 		}
 		exec.shutdown();
 		System.out.println("Done, go to sleep!");

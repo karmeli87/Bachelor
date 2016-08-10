@@ -50,6 +50,8 @@ public class JMatSLine implements Runnable{
 			//System.out.println("[Sending: " + file.myFile +"]");
 			out.write(JMatFileInfo.stringfy(file));
 			out.newLine();
+			out.write("###");
+			out.newLine();
 		}
 		files.list.clear();
 		
